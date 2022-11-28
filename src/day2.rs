@@ -1,50 +1,38 @@
+use shared::intcode_run;
+
 fn main() {
-    let mut mem: Vec<u64> = include_str!("../data/day2.input")
+    let mut mem: Vec<i64> = include_str!("../data/day2.input")
         .split(",")
-        .map( |val| val.trim().parse::<u64>().unwrap() )
+        .map( |val| val.trim().parse::<i64>().unwrap() )
         .collect();
 
-    //println!("Before run -> {:?}", mem);
-    //run_sequence(&mut mem, 12, 2);
-    //println!("After run -> {:?}", mem);
+    prep_input(&mut mem, 12, 2);
+    intcode_run(&mut mem);
 
     println!("Part 1 -> {:?}", mem[0]);
 
-    let (noun, verb) = find_part2(mem);
+    mem = include_str!("../data/day2.input")
+        .split(",")
+        .map( |val| val.trim().parse::<i64>().unwrap() )
+        .collect();
+
+    let (noun, verb) = find_part2(&mut mem);
     println!("noun, verb -> {:?}; {:?}", noun, verb);
     println!("Part 2 -> {:?}", 100 * noun + verb);
 }
 
-fn run_sequence(mem: &mut [u64], noun: u64, verb: u64) {
-    // Prep input
+fn prep_input(mem: &mut [i64], noun: i64, verb: i64) {
     mem[1] = noun;
     mem[2] = verb;
-
-    for i in (0..mem.len()).step_by(4) {
-        if mem[i] == 99 {
-            return;
-        }
-
-        let fpos: usize = mem[i+1] as usize;
-        let spos: usize = mem[i+2] as usize;
-        let output = mem[i+3] as usize;
-
-        if mem[i] == 1 {
-            mem[output] = mem[fpos] + mem[spos];
-        }
-
-        if mem[i] == 2 {
-            mem[output] = mem[fpos] * mem[spos];
-        }
-    }
 }
 
-fn find_part2(mem: Vec<u64>) -> (u64, u64) {
+fn find_part2(mem: &mut Vec<i64>) -> (i64, i64) {
 
     for i in 0..100 {
         for j in 0..100 {
             let mut current = mem.clone();
-            run_sequence(&mut current, i, j);
+            prep_input(&mut current, i, j);
+            intcode_run(&mut current);
 
             if current[0] == 19690720 {
                 return (i, j);
