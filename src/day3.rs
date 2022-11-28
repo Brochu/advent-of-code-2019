@@ -5,7 +5,7 @@ fn main() {
     //println!("Part 2 -> {}", run_part2());
 }
 
-const SIZE:i64 = 500;
+const SIZE:i64 = 1_000_000;
 
 #[derive(Debug)]
 enum Move {
