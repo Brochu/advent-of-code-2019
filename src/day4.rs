@@ -1,6 +1,7 @@
 fn main() {
-    //let res = check_passwd("123389");
-    //println!("test = {}", res);
+    //let passwd = String::from("111122");
+    //let valid = check_passwd(&passwd);
+    //println!("password {} is {}", passwd, if valid { "valid" } else { "invalid" });
 
     println!("Part 1 -> {}", run_part1());
 }
@@ -16,7 +17,10 @@ fn check_passwd(pw: &str) -> bool {
 
     let double = letters
         .windows(2)
-        .any(|w| w[0] == w[1]);
+        .any(|w| { 
+            w[0] == w[1] &&
+            letters.iter().filter(|c| *c == &w[0]).count() == 2
+        });
 
     let nodown = letters
         .windows(2)
