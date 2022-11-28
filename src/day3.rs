@@ -5,6 +5,8 @@ fn main() {
     //println!("Part 2 -> {}", run_part2());
 }
 
+const SIZE:i64 = 500;
+
 #[derive(Debug)]
 enum Move {
     Up(i64),
@@ -24,62 +26,61 @@ fn create_move(elem: &str) -> Move {
 }
 
 fn draw_wire(coords: &mut HashMap<i64, i64>, moves: &[Move]) {
-    println!("{:?}", moves);
-    const SIZE:i64 = 500;
-    let mut pos = 0;
+    let mut x: i64 = 0;
+    let mut y: i64 = 0;
 
     for m in moves {
-        let (min, max, step) = match m {
-            Move::Up(i) => (SIZE, i*SIZE, SIZE),
-            Move::Down(i) => (-i*SIZE, -SIZE, SIZE),
-            Move::Left(i) => (-i, -1, 1),
-            Move::Right(i) => (1, i*1, 1),
+        let (vec, dist) = match m {
+            Move::Up(i) => ((0, 1), *i),
+            Move::Down(i) => ((0, -1), *i),
+            Move::Left(i) => ((-1, 0), *i),
+            Move::Right(i) => ((1, 0), *i),
         };
 
-        for i in (min..max).step_by(step as usize) {
+        for _ in 1..=dist {
+            x += vec.0;
+            y += vec.1;
+
+            let i = coords_to_idx(x, y);
 
             let mut num = 0;
-            if coords.contains_key(&(pos + i)) {
-                num = *coords.get(&(pos + i)).unwrap();
+            if coords.contains_key(&i) {
+                num = *coords.get(&i).unwrap();
             }
-
-            coords.insert(pos+i, num+1);
+            num += 1;
+            coords.insert(i, num);
         }
-
-        if min.abs() > max.abs() {
-            pos += min;
-        }
-        if max.abs() > min.abs() {
-            pos += max;
-        }
+        //println!("({}, {}) : {}", x, y, coords_to_idx(x, y));
     }
 }
 
-fn to_coords(num: i64) -> (i64, i64) {
-    return (num/500, num%500);
+fn idx_to_coords(num: i64) -> (i64, i64) {
+    return (num%SIZE, num/SIZE);
+}
+
+fn coords_to_idx(x: i64, y: i64) -> i64 {
+    return (y * SIZE) + x;
 }
 
 fn run_part1() -> i64 {
     let mut coords: HashMap<i64, i64> = HashMap::new();
-
-    let wires: Vec<Vec<Move>> = include_str!("../data/day3.example")
+    let wires: Vec<Vec<Move>> = include_str!("../data/day3.input")
         .lines()
         .map(|line| line.split(",").map(create_move).collect())
         .collect();
 
     for w in wires {
+        println!("{:?}", w);
         draw_wire(&mut coords, &w);
     }
 
-    let cross: Vec<(i64, i64)> = coords.into_iter()
+    let closest = coords.into_iter()
         .filter(|e| e.1 > 1)
-        .map(|e| to_coords(e.0.abs()))
-        .collect();
-    println!("{:?}", cross);
+        .map(|e| e.0.abs())
+        .min().unwrap();
 
-    //TODO:  Calculate manathan distances
-
-    return 0;
+    let c = idx_to_coords(closest);
+    return c.0 + c.1;
 }
 
 //fn run_part2() -> i64 {
