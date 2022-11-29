@@ -52,7 +52,7 @@ pub fn intcode_parse_op(mem: &[i64], idx: usize) -> Op {
             intcode_parse_arg(&mem[idx+3], &modes[2]),
         ),
         3 => Op::Prompt(Arg::Pointer(mem[idx+1] as usize)),
-        4 => Op::Output(Arg::Pointer(mem[idx+1] as usize)),
+        4 => Op::Output(intcode_parse_arg(&mem[idx+1], &modes[0])),
         _ => panic!("[INTCODE] Could not parse op code"),
     };
 }
@@ -116,7 +116,7 @@ pub fn intcode_run(mem: &mut [i64]) {
             Op::Output(src) => {
                 match src {
                     Arg::Pointer(addr) => println!("[IntCode] {}", mem[addr]),
-                    _ => panic!("[IntCode] Could not load result in immeidate"),
+                    Arg::Immediate(value) => println!("[IntCode] {}", value),
                 };
                 idx += 2;
             },
