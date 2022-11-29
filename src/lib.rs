@@ -1,34 +1,125 @@
 // Use this code file to store shared code between puzzles
+use std::io::stdin;
 
 #[derive(Debug)]
-enum Op {
+pub enum Arg {
+    Pointer(usize),
+    Immediate(i64),
+}
+
+#[derive(Debug)]
+pub enum Op {
     Halt,
-    Add(i64, i64, i64), //Arg1, Arg2, Dest -> Dest = Arg1 + Arg2
-    Multiply(i64, i64, i64), //Arg1, Arg2, Dest -> Dest = Arg1 * Arg2
+    Add(Arg, Arg, Arg), //Arg1, Arg2, Dest -> Dest = Arg1 + Arg2
+    Multiply(Arg, Arg, Arg), //Arg1, Arg2, Dest -> Dest = Arg1 * Arg2
+    Prompt(Arg), //stdin -> Dest
+    Output(Arg), //Src -> stdout
+}
+
+pub fn intcode_parse_opcode(opcode: &i64) -> (u8, Vec<u32>) {
+    let data = format!("{:0>5}", opcode.to_string());
+    let op_pos = data.len() - 2;
+
+    return (
+        data[op_pos..].parse::<u8>().unwrap(),
+        data[0..op_pos].chars().rev().map(|c| c.to_digit(10).unwrap()).collect(),
+    );
+
+}
+
+pub fn intcode_parse_arg(arg: &i64, mode: &u32) -> Arg {
+    if *mode == 0 {
+        return Arg::Pointer(*arg as usize);
+    }
+    else {
+        return Arg::Immediate(*arg);
+    }
+}
+
+pub fn intcode_parse_op(mem: &[i64], idx: usize) -> Op {
+    let (opcode, modes) = intcode_parse_opcode(&mem[idx]);
+
+    return match opcode {
+        99 => Op::Halt,
+        1 => Op::Add(
+            intcode_parse_arg(&mem[idx+1], &modes[0]),
+            intcode_parse_arg(&mem[idx+2], &modes[1]),
+            intcode_parse_arg(&mem[idx+3], &modes[2]),
+        ),
+        2 => Op::Multiply(
+            intcode_parse_arg(&mem[idx+1], &modes[0]),
+            intcode_parse_arg(&mem[idx+2], &modes[1]),
+            intcode_parse_arg(&mem[idx+3], &modes[2]),
+        ),
+        3 => Op::Prompt(Arg::Pointer(mem[idx+1] as usize)),
+        4 => Op::Output(Arg::Pointer(mem[idx+1] as usize)),
+        _ => panic!("[INTCODE] Could not parse op code"),
+    };
 }
 
 pub fn intcode_run(mem: &mut [i64]) {
-    for idx in (0..mem.len()).step_by(4) {
+    let mut idx: usize = 0;
 
-        let op = match mem[idx] {
-            99 => Op::Halt,
-            1 => Op::Add(mem[idx+1], mem[idx+2], mem[idx+3]),
-            2 => Op::Multiply(mem[idx+1], mem[idx+2], mem[idx+3]),
-            _ => panic!("[INTCODE] Could not parse op code"),
-        };
+    while mem[idx] != 99 {
+        let op = intcode_parse_op(&mem, idx);
 
-        if let Op::Halt = op {
+        match op {
+            Op::Halt => return,
+            Op::Add(arg1, arg2, dest) => {
+                let a = match arg1 {
+                    Arg::Pointer(addr) => mem[addr],
+                    Arg::Immediate(value) => value,
+                };
+                let b = match arg2 {
+                    Arg::Pointer(addr) => mem[addr],
+                    Arg::Immediate(value) => value,
+                };
 
-            return;
+                match dest {
+                    Arg::Pointer(addr) => {
+                        mem[addr] = a + b;
+                    }
+                    _ => panic!("[IntCode] Could not store result in immeidate"),
+                };
+                idx += 4;
+            }
+            Op::Multiply(arg1, arg2, dest) => {
+                let a = match arg1 {
+                    Arg::Pointer(addr) => mem[addr],
+                    Arg::Immediate(value) => value,
+                };
+                let b = match arg2 {
+                    Arg::Pointer(addr) => mem[addr],
+                    Arg::Immediate(value) => value,
+                };
 
-        } else if let Op::Add(arg1, arg2, dest) = op {
+                match dest {
+                    Arg::Pointer(addr) => {
+                        mem[addr] = a * b;
+                    }
+                    _ => panic!("[IntCode] Could not store result in immeidate"),
+                };
+                idx += 4;
+            }
+            Op::Prompt(dest) => {
+                let mut buffer = String::new();
+                stdin().read_line(&mut buffer).expect("[IntCode] Could not read input for prompt op");
 
-            mem[dest as usize] = mem[arg1 as usize] + mem[arg2 as usize];
+                let data = buffer.trim().parse::<i64>().unwrap();
 
-        } else if let Op::Multiply(arg1, arg2, dest) = op {
-
-            mem[dest as usize] = mem[arg1 as usize] * mem[arg2 as usize];
-
+                match dest {
+                    Arg::Pointer(addr) => mem[addr] = data,
+                    _ => panic!("[IntCode] Could not store result in immeidate"),
+                };
+                idx += 2;
+            },
+            Op::Output(src) => {
+                match src {
+                    Arg::Pointer(addr) => println!("[IntCode] {}", mem[addr]),
+                    _ => panic!("[IntCode] Could not load result in immeidate"),
+                };
+                idx += 2;
+            },
         }
     }
 }
