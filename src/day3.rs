@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::HashSet;
 
 fn main() {
     println!("Part 1 -> {}", run_part1());
@@ -16,16 +16,19 @@ enum Move {
 }
 
 fn create_move(elem: &str) -> Move {
+    let num: i64 = elem[1..].parse().unwrap();
+
     return match &elem[0..1] {
-        "U" => Move::Up(elem[1..].parse().unwrap()),
-        "D" => Move::Down(elem[1..].parse().unwrap()),
-        "L" => Move::Left(elem[1..].parse().unwrap()),
-        "R" => Move::Right(elem[1..].parse().unwrap()),
+        "U" => Move::Up(num),
+        "D" => Move::Down(num),
+        "L" => Move::Left(num),
+        "R" => Move::Right(num),
         _ => panic!(),
     }
 }
 
-fn draw_wire(coords: &mut HashMap<i64, i64>, moves: &[Move]) {
+fn build_wire(moves: &[Move]) -> HashSet<i64> {
+    let mut coords: HashSet<i64> = HashSet::new();
     let mut x: i64 = 0;
     let mut y: i64 = 0;
 
@@ -41,20 +44,14 @@ fn draw_wire(coords: &mut HashMap<i64, i64>, moves: &[Move]) {
             x += vec.0;
             y += vec.1;
 
-            let i = coords_to_idx(x, y);
-
-            let mut num = 0;
-            if coords.contains_key(&i) {
-                num = *coords.get(&i).unwrap();
-            }
-            num += 1;
-            coords.insert(i, num);
+            coords.insert(coords_to_idx(x, y));
         }
-        //println!("({}, {}) : {}", x, y, coords_to_idx(x, y));
     }
+
+    return coords;
 }
 
-fn idx_to_coords(num: i64) -> (i64, i64) {
+fn idx_to_coords(num: &i64) -> (i64, i64) {
     return (num%SIZE, num/SIZE);
 }
 
@@ -63,24 +60,26 @@ fn coords_to_idx(x: i64, y: i64) -> i64 {
 }
 
 fn run_part1() -> i64 {
-    let mut coords: HashMap<i64, i64> = HashMap::new();
-    let wires: Vec<Vec<Move>> = include_str!("../data/day3.input")
-        .lines()
-        .map(|line| line.split(",").map(create_move).collect())
-        .collect();
+    let mut file = include_str!("../data/day3.input").lines();
+    let wire1: Vec<Move> = file.next()
+        .unwrap()
+        .split(",")
+        .map(create_move).collect();
 
-    for w in wires {
-        println!("{:?}", w);
-        draw_wire(&mut coords, &w);
-    }
+    let wire2: Vec<Move> = file.next()
+        .unwrap()
+        .split(",")
+        .map(create_move).collect();
 
-    let closest = coords.into_iter()
-        .filter(|e| e.1 > 1)
-        .map(|e| e.0.abs())
+    let coords1 = build_wire(&wire1);
+    let coords2 = build_wire(&wire2);
+
+    let res = coords1.intersection(&coords2)
+        .map(|i| idx_to_coords(i))
+        .map(|c| c.0.abs() + c.1.abs())
         .min().unwrap();
 
-    let c = idx_to_coords(closest);
-    return c.0 + c.1;
+    return res;
 }
 
 //fn run_part2() -> i64 {
