@@ -1,11 +1,10 @@
 use std::collections::HashSet;
+use std::collections::HashMap;
 
 fn main() {
     println!("Part 1 -> {}", run_part1());
-    //println!("Part 2 -> {}", run_part2());
+    println!("Part 2 -> {}", run_part2());
 }
-
-const SIZE:i64 = 1_000_000;
 
 #[derive(Debug)]
 enum Move {
@@ -27,10 +26,13 @@ fn create_move(elem: &str) -> Move {
     }
 }
 
-fn build_wire(moves: &[Move]) -> HashSet<i64> {
-    let mut coords: HashSet<i64> = HashSet::new();
+fn build_wire(moves: &[Move]) -> (HashSet<(i64, i64)>, HashMap<(i64, i64), i64>) {
+    let mut coords: HashSet<(i64, i64)> = HashSet::new();
+    let mut maps: HashMap<(i64, i64), i64> = HashMap::new();
+
     let mut x: i64 = 0;
     let mut y: i64 = 0;
+    let mut travel: i64 = 0;
 
     for m in moves {
         let (vec, dist) = match m {
@@ -41,22 +43,17 @@ fn build_wire(moves: &[Move]) -> HashSet<i64> {
         };
 
         for _ in 1..=dist {
+            travel += 1; // Keep track of the distance for each coords reached
+
             x += vec.0;
             y += vec.1;
 
-            coords.insert(coords_to_idx(x, y));
+            coords.insert((x, y));
+            maps.insert((x, y), travel);
         }
     }
 
-    return coords;
-}
-
-fn idx_to_coords(num: &i64) -> (i64, i64) {
-    return (num%SIZE, num/SIZE);
-}
-
-fn coords_to_idx(x: i64, y: i64) -> i64 {
-    return (y * SIZE) + x;
+    return (coords, maps);
 }
 
 fn run_part1() -> i64 {
@@ -71,17 +68,34 @@ fn run_part1() -> i64 {
         .split(",")
         .map(create_move).collect();
 
-    let coords1 = build_wire(&wire1);
-    let coords2 = build_wire(&wire2);
+    let (coords1, _) = build_wire(&wire1);
+    let (coords2, _) = build_wire(&wire2);
 
     let res = coords1.intersection(&coords2)
-        .map(|i| idx_to_coords(i))
         .map(|c| c.0.abs() + c.1.abs())
         .min().unwrap();
 
     return res;
 }
 
-//fn run_part2() -> i64 {
-//    return 0;
-//}
+fn run_part2() -> i64 {
+    let mut file = include_str!("../data/day3.input").lines();
+    let wire1: Vec<Move> = file.next()
+        .unwrap()
+        .split(",")
+        .map(create_move).collect();
+
+    let wire2: Vec<Move> = file.next()
+        .unwrap()
+        .split(",")
+        .map(create_move).collect();
+
+    let (coords1, map1) = build_wire(&wire1);
+    let (coords2, map2) = build_wire(&wire2);
+
+    let best = coords1.intersection(&coords2)
+        .map(|i| (i, map1.get(i).unwrap(), map2.get(i).unwrap()))
+        .min_by(|f, s| (f.1 + f.2).cmp(&(s.1 + s.2))).unwrap();
+
+    return best.1 + best.2;
+}
