@@ -22,6 +22,8 @@ pub enum Op {
 
     Less(Arg, Arg, Arg), //Arg1, Arg2, Dest -> Dest = Arg1 < Arg2
     Equal(Arg, Arg, Arg), //Arg1, Arg2, Dest -> Dest = Arg1 == Arg2
+
+    RelativeOffset(Arg), //base_addr += Arg
 }
 
 fn intcode_parse_opcode(opcode: &i64) -> (u8, Vec<u32>) {
@@ -79,6 +81,9 @@ pub fn intcode_parse_op(mem: &[i64], idx: usize) -> Op {
             intcode_parse_arg(&mem[idx+2], &modes[1]),
             Arg::Pointer(mem[idx+3] as usize),
         ),
+        9 => Op::RelativeOffset(
+            intcode_parse_arg(&mem[idx+1], &modes[0])
+        ),
         _ => panic!("[INTCODE] Could not parse op code"),
     };
 }
@@ -117,10 +122,11 @@ pub fn intcode_solve_2param(mem: &mut [i64], cond: Arg, jump: Arg) -> (i64, usiz
 }
 
 pub fn intcode_run(mem: &mut [i64]) {
-    let mut idx: usize = 0;
+    let mut pc: usize = 0;
+    let mut base_addr: i64 = 0;
 
-    while mem[idx] != 99 {
-        let op = intcode_parse_op(&mem, idx);
+    while mem[pc] != 99 {
+        let op = intcode_parse_op(&mem, pc);
 
         match op {
             Op::Halt => return,
@@ -128,13 +134,13 @@ pub fn intcode_run(mem: &mut [i64]) {
                 let (a, b, target) = intcode_solve_3param(mem, arg1, arg2, dest);
 
                 mem[target] = a + b;
-                idx += 4;
+                pc += 4;
             }
             Op::Multiply(arg1, arg2, dest) => {
                 let (a, b, target) = intcode_solve_3param(mem, arg1, arg2, dest);
 
                 mem[target] = a * b;
-                idx += 4;
+                pc += 4;
             }
             Op::Prompt(dest) => {
                 let mut buffer = String::new();
@@ -146,37 +152,44 @@ pub fn intcode_run(mem: &mut [i64]) {
                     Arg::Pointer(addr) => mem[addr] = data,
                     _ => panic!("[IntCode] Could not store result in immeidate"),
                 };
-                idx += 2;
+                pc += 2;
             },
             Op::Output(src) => {
                 match src {
                     Arg::Pointer(addr) => println!("[IntCode] {}", mem[addr]),
                     Arg::Immediate(value) => println!("[IntCode] {}", value),
                 };
-                idx += 2;
+                pc += 2;
             },
             Op::JumpTrue(cond, jump) => {
                 let (cmp, target) = intcode_solve_2param(mem, cond, jump);
 
-                if cmp != 0 { idx = target; } else { idx += 3 }
+                if cmp != 0 { pc = target; } else { pc += 3 }
             },
             Op::JumpFalse(cond, jump) => {
                 let (cmp, target) = intcode_solve_2param(mem, cond, jump);
 
-                if cmp == 0 { idx = target; } else { idx += 3 }
+                if cmp == 0 { pc = target; } else { pc += 3 }
             },
             Op::Less(arg1, arg2, dest) => {
                 let (a, b, target) = intcode_solve_3param(mem, arg1, arg2, dest);
 
                 mem[target] = if a < b { 1 } else { 0 };
-                idx += 4;
-            }
+                pc += 4;
+            },
             Op::Equal(arg1, arg2, dest) => {
                 let (a, b, target) = intcode_solve_3param(mem, arg1, arg2, dest);
 
                 mem[target] = if a == b { 1 } else { 0 };
-                idx += 4;
-            }
+                pc += 4;
+            },
+            Op::RelativeOffset(arg) => {
+                match arg {
+                    Arg::Pointer(addr) => base_addr += mem[addr],
+                    Arg::Immediate(value) => base_addr += value,
+                };
+                pc += 2;
+            },
         }
     }
 }
