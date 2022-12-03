@@ -1,8 +1,13 @@
+use shared::intcode_run;
+
 fn main() {
-    let program = include_str!("../data/day9.example")
+    let mut program = include_str!("../data/day9.input")
         .split(",")
         .map( |val| val.trim().parse().unwrap() )
         .collect::<Vec<i64>>();
+    program.resize(100_000, 0);
+
+    intcode_run(&mut program);
 
     println!("[Day9] part 1 = {}", run_part1(&program));
     println!("[Day9] part 2 = {}", run_part2(&program));
