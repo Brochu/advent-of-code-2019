@@ -75,12 +75,12 @@ pub fn intcode_parse_op(mem: &[i64], idx: usize) -> Op {
         7 => Op::Less(
             intcode_parse_arg(&mem[idx+1], &modes[0]),
             intcode_parse_arg(&mem[idx+2], &modes[1]),
-            Arg::Pointer(mem[idx+3] as usize),
+            intcode_parse_arg(&mem[idx+3], &modes[2]),
         ),
         8 => Op::Equal(
             intcode_parse_arg(&mem[idx+1], &modes[0]),
             intcode_parse_arg(&mem[idx+2], &modes[1]),
-            Arg::Pointer(mem[idx+3] as usize),
+            intcode_parse_arg(&mem[idx+3], &modes[2]),
         ),
         9 => Op::RelativeOffset(
             intcode_parse_arg(&mem[idx+1], &modes[0])
