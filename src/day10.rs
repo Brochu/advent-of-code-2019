@@ -61,7 +61,7 @@ fn main() {
 fn run_part1(map: &Map) -> u64 {
     map.debug_print();
 
-    map.states.iter()
+    let coords = map.states.iter()
         .enumerate()
         .filter_map(|st| {
             match st.1 {
@@ -69,9 +69,23 @@ fn run_part1(map: &Map) -> u64 {
                 State::Asteroid => Some(st),
             }
         })
-        .map(|st| (idx_to_coords(&map, st.0), st.1))
-        .for_each(|st| println!("{:?}", st));
+        .map(|st| idx_to_coords(&map, st.0))
+        .collect::<Vec<(usize, usize)>>();
 
+    coords.iter().for_each(|c| println!("{:?}", c));
+
+    let seen_counts = coords.iter()
+        .map(|coord| {
+            coords.iter()
+                .fold(0 as usize, |seen, other| {
+                    //TODO: Count visible Asteroids here
+                    // Need to store the deltay / deltax to compare blocking directions
+                    0
+                })
+        })
+        .collect::<Vec<usize>>();
+
+    seen_counts.iter().for_each(|s| println!("{:?}", s));
     return 0;
 }
 
