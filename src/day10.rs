@@ -61,6 +61,8 @@ fn main() {
 fn run_part1(map: &Map) -> u64 {
     map.debug_print();
 
+    println!("TEST: {}", f32::INFINITY == f32::NEG_INFINITY);
+
     let coords = map.states.iter()
         .enumerate()
         .filter_map(|st| {
@@ -72,20 +74,20 @@ fn run_part1(map: &Map) -> u64 {
         .map(|st| idx_to_coords(&map, st.0))
         .collect::<Vec<(usize, usize)>>();
 
-    coords.iter().for_each(|c| println!("{:?}", c));
-
-    let seen_counts = coords.iter()
-        .map(|coord| {
-            coords.iter()
-                .fold(0 as usize, |seen, other| {
-                    //TODO: Count visible Asteroids here
-                    // Need to store the deltay / deltax to compare blocking directions
-                    0
-                })
+    let cross = coords.iter().flat_map(|&c0| {
+        coords.iter().filter_map(move |&c1| {
+            if c0 == c1 { 
+                None
+            }
+            else {
+                Some((c0, c1))
+            }
         })
-        .collect::<Vec<usize>>();
+    });
 
-    seen_counts.iter().for_each(|s| println!("{:?}", s));
+    cross.for_each(|(coord0, coord1)| println!("{:?} -> {:?}", coord0, coord1));
+
+    //TODO: Need to implement a find_gcd function
     return 0;
 }
 
