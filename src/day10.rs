@@ -1,14 +1,9 @@
+use std::collections::HashSet;
+
 #[derive(Debug)]
 enum State {
     Empty,
     Asteroid,
-}
-
-fn to_short(state: &State) -> char {
-    match state {
-        State::Empty => '.',
-        State::Asteroid => '#',
-    }
 }
 
 #[derive(Debug)]
@@ -17,18 +12,8 @@ struct Map {
     states: Vec<State>,
 }
 
-impl Map {
-    fn debug_print(&self) {
-        self.states[..].chunks(self.n)
-            .for_each(|c| {
-                c.iter().for_each(|s| print!("{:?}", to_short(s)));
-                println!();
-            });
-    }
-}
-
-fn idx_to_coords(map: &Map, idx: usize) -> (usize, usize) {
-    return (idx / map.n, idx % map.n);
+fn idx_to_coords(map: &Map, idx: usize) -> (i64, i64) {
+    return ((idx / map.n) as i64, (idx % map.n) as i64);
 }
 
 fn parse_input() -> Map {
@@ -51,6 +36,15 @@ fn parse_input() -> Map {
     return Map { n: size, states: map_states };
 }
 
+fn find_gcd(mut a: i64, mut b: i64) -> i64 {
+    while b != 0 {
+        let t = b;
+        b = a % b;
+        a = t;
+    }
+    return a;
+}
+
 fn main() {
     let map = parse_input();
 
@@ -59,10 +53,6 @@ fn main() {
 }
 
 fn run_part1(map: &Map) -> u64 {
-    map.debug_print();
-
-    println!("TEST: {}", f32::INFINITY == f32::NEG_INFINITY);
-
     let coords = map.states.iter()
         .enumerate()
         .filter_map(|st| {
@@ -72,22 +62,9 @@ fn run_part1(map: &Map) -> u64 {
             }
         })
         .map(|st| idx_to_coords(&map, st.0))
-        .collect::<Vec<(usize, usize)>>();
+        .collect::<Vec<(i64, i64)>>();
 
-    let cross = coords.iter().flat_map(|&c0| {
-        coords.iter().filter_map(move |&c1| {
-            if c0 == c1 { 
-                None
-            }
-            else {
-                Some((c0, c1))
-            }
-        })
-    });
-
-    cross.for_each(|(coord0, coord1)| println!("{:?} -> {:?}", coord0, coord1));
-
-    //TODO: Need to implement a find_gcd function
+    println!("{:?}", coords);
     return 0;
 }
 
