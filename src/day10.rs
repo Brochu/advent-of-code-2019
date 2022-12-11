@@ -1,15 +1,31 @@
-use std::collections::HashSet;
-
 #[derive(Debug)]
 enum State {
     Empty,
     Asteroid,
 }
 
+fn display_state(state: &State) -> char {
+    match state {
+        State::Empty => '.',
+        State::Asteroid => '#',
+    }
+}
+
 #[derive(Debug)]
 struct Map {
     n: usize,
     states: Vec<State>,
+}
+
+fn print_map(map: &Map) {
+    map.states[..]
+        .chunks(map.n)
+        .for_each(|st| {
+            st.iter().for_each(|s| print!("{:?}", display_state(s)));
+            println!();
+        });
+
+    println!();
 }
 
 fn idx_to_coords(map: &Map, idx: usize) -> (i64, i64) {
@@ -52,19 +68,38 @@ fn main() {
     //println!("[Day10] part 2 = {}", run_part2(&map));
 }
 
+            //match st {
+            //    State::Empty => None,
+            //    State::Asteroid => Some(st),
+            //}
 fn run_part1(map: &Map) -> u64 {
-    let coords = map.states.iter()
+    print_map(&map);
+
+    let asteroids = map.states.iter()
         .enumerate()
-        .filter_map(|st| {
-            match st.1 {
+        .filter_map(|(idx, st)| {
+            match st {
                 State::Empty => None,
-                State::Asteroid => Some(st),
+                State::Asteroid => Some((idx, idx_to_coords(&map, idx))),
             }
         })
-        .map(|st| idx_to_coords(&map, st.0))
-        .collect::<Vec<(i64, i64)>>();
+        .collect::<Vec<(usize, (i64, i64))>>();
 
-    println!("{:?}", coords);
+    let checks = asteroids.iter()
+        .flat_map(|(i0, a0)| {
+            asteroids.iter().filter_map(move |(i1, a1)| {
+                if i0 != i1 {
+                    Some((a0, a1))
+                }
+                else {
+                    None
+                }
+            })
+        });
+
+    checks.for_each(|(a0, a1)| {
+        println!("{:?} vs. {:?}", a0, a1);
+    });
     return 0;
 }
 
