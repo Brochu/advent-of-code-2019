@@ -169,9 +169,9 @@ pub fn intcode_run(mem: &mut [i64], inputs: &[String], outputs: &mut Vec<String>
             },
             Op::Output(src) => {
                 let out = match src {
-                    Arg::Pointer(addr) => format!("[IntCode] {}", mem[addr]),
-                    Arg::Immediate(value) => format!("[IntCode] {}", value),
-                    Arg::Relative(offset) => format!("[IntCode] {}", mem[(base_addr + offset) as usize]),
+                    Arg::Pointer(addr) => format!("{}", mem[addr]),
+                    Arg::Immediate(value) => format!("{}", value),
+                    Arg::Relative(offset) => format!("{}", mem[(base_addr + offset) as usize]),
                 };
                 outputs.push(out);
                 pc += 2;
