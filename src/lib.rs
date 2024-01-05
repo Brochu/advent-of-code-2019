@@ -127,8 +127,9 @@ pub fn intcode_solve_2param(mem: &mut [i64], base: i64, cond: Arg, jump: Arg) ->
     return (cmp, target);
 }
 
-pub fn intcode_run(mem: &mut [i64]) {
+pub fn intcode_run(mem: &mut [i64], inputs: &[String]) {
     let mut pc: usize = 0;
+    let mut ic: usize = 0;
     let mut base_addr: i64 = 0;
 
     while mem[pc] != 99 {
@@ -152,19 +153,23 @@ pub fn intcode_run(mem: &mut [i64]) {
                 pc += 4;
             }
             Op::Prompt(dest) => {
-                let mut buffer = String::new();
-                stdin().read_line(&mut buffer).expect("[IntCode] Could not read input for prompt op");
+                if let Some(buffer) = inputs.get(ic) {
+                    ic += 1;
+                    let data = buffer.trim().parse::<i64>().unwrap();
 
-                let data = buffer.trim().parse::<i64>().unwrap();
-
-                match dest {
-                    Arg::Pointer(addr) => mem[addr] = data,
-                    Arg::Relative(offset) => mem[(base_addr + offset) as usize] = data,
-                    _ => panic!("[IntCode] Could not store result in immeidate"),
-                };
-                pc += 2;
+                    match dest {
+                        Arg::Pointer(addr) => mem[addr] = data,
+                        Arg::Relative(offset) => mem[(base_addr + offset) as usize] = data,
+                        _ => panic!("[IntCode] Could not store result in immeidate"),
+                    };
+                    pc += 2;
+                } else {
+                    println!("[ERROR] Ran out of inputs !");
+                    return;
+                }
             },
             Op::Output(src) => {
+                //TODO: Find a way to send a stream for output instead of stdout or stderr
                 match src {
                     Arg::Pointer(addr) => println!("[IntCode] {}", mem[addr]),
                     Arg::Immediate(value) => println!("[IntCode] {}", value),
