@@ -8,7 +8,8 @@ fn main() {
 
     prep_input(&mut mem, 12, 2);
     let inputs: &[String; 0] = &[];
-    intcode_run(&mut mem, inputs);
+    let mut outputs: Vec<String> = vec![];
+    intcode_run(&mut mem, inputs, &mut outputs);
 
     println!("Part 1 -> {:?}", mem[0]);
 
@@ -29,12 +30,13 @@ fn prep_input(mem: &mut [i64], noun: i64, verb: i64) {
 
 fn find_part2(mem: &mut Vec<i64>) -> (i64, i64) {
     let inputs: &[String; 0] = &[];
+    let mut outputs: Vec<String> = vec![];
 
     for i in 0..100 {
         for j in 0..100 {
             let mut current = mem.clone();
             prep_input(&mut current, i, j);
-            intcode_run(&mut current, inputs);
+            intcode_run(&mut current, inputs, &mut outputs);
 
             if current[0] == 19690720 {
                 return (i, j);

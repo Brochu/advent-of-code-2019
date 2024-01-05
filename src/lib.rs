@@ -1,6 +1,4 @@
 // Use this code file to store shared code between puzzles
-use std::io::stdin;
-
 #[derive(Debug)]
 pub enum Arg {
     Pointer(usize),
@@ -127,10 +125,11 @@ pub fn intcode_solve_2param(mem: &mut [i64], base: i64, cond: Arg, jump: Arg) ->
     return (cmp, target);
 }
 
-pub fn intcode_run(mem: &mut [i64], inputs: &[String]) {
+pub fn intcode_run(mem: &mut [i64], inputs: &[String], outputs: &mut Vec<String>) {
     let mut pc: usize = 0;
     let mut ic: usize = 0;
     let mut base_addr: i64 = 0;
+    outputs.clear();
 
     while mem[pc] != 99 {
         let op = intcode_parse_op(&mem, pc);
@@ -169,12 +168,12 @@ pub fn intcode_run(mem: &mut [i64], inputs: &[String]) {
                 }
             },
             Op::Output(src) => {
-                //TODO: Find a way to send a stream for output instead of stdout or stderr
-                match src {
-                    Arg::Pointer(addr) => println!("[IntCode] {}", mem[addr]),
-                    Arg::Immediate(value) => println!("[IntCode] {}", value),
-                    Arg::Relative(offset) => println!("[IntCode] {}", mem[(base_addr + offset) as usize]),
+                let out = match src {
+                    Arg::Pointer(addr) => format!("[IntCode] {}", mem[addr]),
+                    Arg::Immediate(value) => format!("[IntCode] {}", value),
+                    Arg::Relative(offset) => format!("[IntCode] {}", mem[(base_addr + offset) as usize]),
                 };
+                outputs.push(out);
                 pc += 2;
             },
             Op::JumpTrue(cond, jump) => {
