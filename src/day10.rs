@@ -4,6 +4,15 @@ enum Node {
     Empty,
     Asteroid,
 }
+impl Display for Node {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let c = match self {
+            Node::Empty => '.',
+            Node::Asteroid => '#',
+        };
+        write!(f, "{}", c)
+    }
+}
 
 struct Map {
     n: usize,
@@ -24,6 +33,14 @@ impl Display for Map {
             output.push('\n');
         }
         write!(f, "{}{:?}", output, self.asteroids)
+    }
+}
+impl Map {
+    fn get(&self, x: usize, y: usize) -> &Node {
+        return &self.nodes[(y * self.n) + x];
+    }
+    fn coords(&self, idx: usize) -> (usize, usize) {
+        return (idx % self.n, idx / self.n);
     }
 }
 
@@ -58,7 +75,22 @@ fn main() {
 }
 
 fn run_part1(map: &Map) -> u64 {
-    println!("{}", map);
+    //for y in 0..5 {
+    //    for x in 0..5 {
+    //        println!(" - ({}, {}) -> {}", x, y, map.get(x, y));
+    //    }
+    //}
+    //for i in 0..map.n * map.n {
+    //    let (x, y) = map.coords(i);
+    //    println!(" - {} -> ({}, {})", i, x, y);
+    //}
+
+    for i0 in &map.asteroids[0..1] {
+        for i1 in &map.asteroids[..] {
+            if i0 == i1 { continue; }
+            println!("{} vs. {}", i0, i1);
+        }
+    }
     return 0;
 }
 
