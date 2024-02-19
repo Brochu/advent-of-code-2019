@@ -4,15 +4,6 @@ enum Node {
     Empty,
     Asteroid,
 }
-impl Display for Node {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let char = match self {
-            Node::Empty => ".",
-            Node::Asteroid => "#",
-        };
-        write!(f, "{}", char)
-    }
-}
 
 struct Map {
     n: usize,
@@ -20,24 +11,34 @@ struct Map {
 }
 impl Display for Map {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let output = self.nodes[..].chunks(self.n)
-            .fold(String::new(), |acc, c| {
-                let line = c.iter().fold(String::new(), |l, n| {
-                    let char = match n {
-                        Node::Empty => ".",
-                        Node::Asteroid => "#",
-                    };
-                    format!("{}{}", l, char)
-                });
-                format!("{}\n{}", acc, line)
-            });
-        writeln!(f, "{}", output)
+        let mut output = String::new();
+        for chunk in self.nodes[..].chunks(self.n) {
+            for e in chunk {
+                let c = match e {
+                    Node::Empty => '.',
+                    Node::Asteroid => '#',
+                };
+                output.push(c);
+            }
+            output.push('\n');
+        }
+        write!(f, "{}", output)
     }
 }
 
 fn parse_input() -> Map {
     let input = include_str!("../data/day10.example");
-    return Map { n: 0, nodes: vec![] };
+    let n = input.split_once("\n").unwrap().0.len() - 1;
+    let nodes: Vec<Node> = input.chars()
+        .filter_map(|c| {
+            match c {
+                '#' => Some(Node::Asteroid),
+                '.' => Some(Node::Empty),
+                _   => None,
+            }
+        })
+        .collect();
+    return Map { n, nodes };
 }
 
 fn main() {
