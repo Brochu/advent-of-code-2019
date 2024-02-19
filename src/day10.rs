@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::{Display, Pointer}, cmp::min, cmp::max};
 
 enum Node {
     Empty,
@@ -36,11 +36,15 @@ impl Display for Map {
     }
 }
 impl Map {
-    fn get(&self, x: usize, y: usize) -> &Node {
-        return &self.nodes[(y * self.n) + x];
+    fn get(&self, x: i32, y: i32) -> &Node {
+        let size: i32 = self.n.try_into().unwrap();
+        let idx: usize = ((y * size) + x).try_into().unwrap();
+        return &self.nodes[idx];
     }
-    fn coords(&self, idx: usize) -> (usize, usize) {
-        return (idx % self.n, idx / self.n);
+    fn coords(&self, idx: usize) -> (i32, i32) {
+        let x: i32 = (idx % self.n).try_into().unwrap();
+        let y: i32 = (idx / self.n).try_into().unwrap();
+        return (x, y);
     }
 }
 
@@ -74,7 +78,42 @@ fn main() {
     //println!("[Day10] part 2 = {}", run_part2(&map));
 }
 
-fn run_part1(map: &Map) -> u64 {
+fn gcd(a: i32, b: i32) -> i32 {
+    let mut res = min(a, b);
+    if res == 0 {
+        // Handle if one value is 0
+        return max(a, b);
+    }
+
+    while res > 0 {
+        if a % res == 0 && b % res == 0 { break; }
+        res -= 1;
+    }
+
+    return res.abs();
+}
+
+fn check_los(map: &Map, start: (i32, i32), d: (i32, i32), gcd: i32) -> bool {
+    let (x, y) = start;
+    let (dx, dy) = d;
+    let (xdel, ydel) = (dx / gcd, dy / gcd);
+    println!("[LOS] from ({},{}), dir ({},{}), deltas ({},{})", x, y, dx, dy, xdel, ydel);
+    if gcd <= 1 { return true; }
+
+    for i in 1..gcd {
+        let (xp, yp) = ((x + (i * xdel)), (y + (i * ydel)));
+        let c = map.get(xp, yp);
+        println!(" - ({},{}), {}", xp, yp, c);
+
+        if let Node::Asteroid = c {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+fn run_part1(map: &Map) -> usize {
     //for y in 0..5 {
     //    for x in 0..5 {
     //        println!(" - ({}, {}) -> {}", x, y, map.get(x, y));
@@ -85,13 +124,25 @@ fn run_part1(map: &Map) -> u64 {
     //    println!(" - {} -> ({}, {})", i, x, y);
     //}
 
-    for i0 in &map.asteroids[0..1] {
-        for i1 in &map.asteroids[..] {
-            if i0 == i1 { continue; }
-            println!("{} vs. {}", i0, i1);
-        }
-    }
-    return 0;
+    map.asteroids[0..1].iter().map(|a| {
+        map.asteroids.iter().filter(|&a1| {
+            if a == a1 { return false; }
+
+            let (x0, y0) = map.coords(*a);
+            let (x1, y1) = map.coords(*a1);
+            let (dx, dy) = ((x1 - x0), (y1 - y0));
+            let gcd = gcd(dx, dy);
+
+            let res = check_los(map, (x0, y0), (dx, dy), gcd);
+            println!("[LOS] res = {}", res);
+            res
+        })
+        .count()
+    })
+    .inspect(|c| println!(" - {}", c))
+    .fold(0, |m, count| {
+            max(m, count)
+        })
 }
 
 //fn run_part2(map: &Map) -> u64 {
