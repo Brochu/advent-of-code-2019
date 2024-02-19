@@ -8,6 +8,7 @@ enum Node {
 struct Map {
     n: usize,
     nodes: Vec<Node>,
+    asteroids: Vec<usize>,
 }
 impl Display for Map {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -22,7 +23,7 @@ impl Display for Map {
             }
             output.push('\n');
         }
-        write!(f, "{}", output)
+        write!(f, "{}{:?}", output, self.asteroids)
     }
 }
 
@@ -38,7 +39,15 @@ fn parse_input() -> Map {
             }
         })
         .collect();
-    return Map { n, nodes };
+    let asteroids = nodes.iter().enumerate()
+        .filter_map(|(i, n)| {
+            match n {
+                Node::Asteroid => Some(i),
+                Node::Empty => None,
+            }
+        })
+        .collect();
+    return Map { n, nodes, asteroids };
 }
 
 fn main() {
