@@ -79,10 +79,10 @@ fn main() {
 }
 
 fn gcd(a: i32, b: i32) -> i32 {
-    let mut res = min(a, b);
+    let mut res = min(a.abs(), b.abs());
     if res == 0 {
         // Handle if one value is 0
-        return max(a, b);
+        return max(a.abs(), b.abs());
     }
 
     while res > 0 {
@@ -93,17 +93,22 @@ fn gcd(a: i32, b: i32) -> i32 {
     return res.abs();
 }
 
-fn check_los(map: &Map, start: (i32, i32), d: (i32, i32), gcd: i32) -> bool {
-    let (x, y) = start;
-    let (dx, dy) = d;
-    let (xdel, ydel) = (dx / gcd, dy / gcd);
-    println!("[LOS] from ({},{}), dir ({},{}), deltas ({},{})", x, y, dx, dy, xdel, ydel);
-    if gcd <= 1 { return true; }
+fn check_los(map: &Map, start: (i32, i32), end: (i32, i32)) -> bool {
+    let (sx, sy) = start;
+    let (ex, ey) = end;
+    //println!("[LOS] from ({},{}), end ({},{})", sx, sy, ex, ey);
+    let (dx, dy) = (ex - sx, ey - sy);
+    //println!(" - dx/dy ({},{})", dx, dy);
+    let div = gcd(dx, dy);
+    //println!(" - div {}", div);
+    let (xd, yd) = (dx/div, dy/div);
+    //println!(" - xd,yd ({},{})", xd, yd);
 
-    for i in 1..gcd {
-        let (xp, yp) = ((x + (i * xdel)), (y + (i * ydel)));
+    if div <= 1 { return true; }
+    for i in 1..div {
+        let (xp, yp) = ((sx + (i * xd)), (sy + (i * yd)));
         let c = map.get(xp, yp);
-        println!(" - ({},{}), {}", xp, yp, c);
+        //println!(" - ({},{}), {}", xp, yp, c);
 
         if let Node::Asteroid = c {
             return false;
@@ -124,17 +129,12 @@ fn run_part1(map: &Map) -> usize {
     //    println!(" - {} -> ({}, {})", i, x, y);
     //}
 
-    map.asteroids[0..1].iter().map(|a| {
+    map.asteroids[..].iter().map(|a| {
         map.asteroids.iter().filter(|&a1| {
             if a == a1 { return false; }
 
-            let (x0, y0) = map.coords(*a);
-            let (x1, y1) = map.coords(*a1);
-            let (dx, dy) = ((x1 - x0), (y1 - y0));
-            let gcd = gcd(dx, dy);
-
-            let res = check_los(map, (x0, y0), (dx, dy), gcd);
-            println!("[LOS] res = {}", res);
+            let res = check_los(map, map.coords(*a), map.coords(*a1));
+            //println!("[LOS] res = {}", res);
             res
         })
         .count()
