@@ -1,4 +1,4 @@
-use std::{fmt::{Display, Pointer}, cmp::min, cmp::max};
+use std::{fmt::Display, cmp::min, cmp::max};
 
 enum Node {
     Empty,
@@ -75,7 +75,7 @@ fn main() {
     let map = parse_input();
 
     println!("[Day10] part 1 = {}", run_part1(&map));
-    //println!("[Day10] part 2 = {}", run_part2(&map));
+    println!("[Day10] part 2 = {:?}", run_part2(&map));
 }
 
 fn gcd(a: i32, b: i32) -> i32 {
@@ -119,16 +119,6 @@ fn check_los(map: &Map, start: (i32, i32), end: (i32, i32)) -> bool {
 }
 
 fn run_part1(map: &Map) -> usize {
-    //for y in 0..5 {
-    //    for x in 0..5 {
-    //        println!(" - ({}, {}) -> {}", x, y, map.get(x, y));
-    //    }
-    //}
-    //for i in 0..map.n * map.n {
-    //    let (x, y) = map.coords(i);
-    //    println!(" - {} -> ({}, {})", i, x, y);
-    //}
-
     map.asteroids[..].iter().map(|a| {
         map.asteroids.iter().filter(|&a1| {
             if a == a1 { return false; }
@@ -139,12 +129,12 @@ fn run_part1(map: &Map) -> usize {
         })
         .count()
     })
-    .inspect(|c| println!(" - {}", c))
+    //.inspect(|c| println!(" - {}", c))
     .fold(0, |m, count| {
             max(m, count)
         })
 }
 
-//fn run_part2(map: &Map) -> u64 {
-//    return 0;
-//}
+fn run_part2(map: &Map) -> (i32, i32) {
+    map.coords(*map.asteroids.last().unwrap())
+}
