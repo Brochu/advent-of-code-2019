@@ -2,6 +2,7 @@ package main
 
 import "core:fmt"
 import "core:mem"
+import "core:mem/virtual"
 import os "core:os/os2"
 import "core:strconv"
 import "core:strings"
@@ -16,11 +17,14 @@ main :: proc() {
     day, valid := which_day();
     if (!valid) { return; }
 
-    ptr, err := mem.alloc_bytes(1024);
-    arena: mem.Arena;
-    mem.arena_init(&arena, ptr);
-    alloc := mem.arena_allocator(&arena);
-    context.allocator = alloc;
+    arena : virtual.Arena;
+    palloc : mem.Allocator;
+    assert(virtual.arena_init_growing(&arena) == virtual.Allocator_Error.None);
+    palloc, context.allocator = context.allocator, virtual.arena_allocator(&arena);
+    defer {
+        context.allocator  = palloc;
+        virtual.arena_destroy(&arena);
+    }
 
     b1, b1err := strings.builder_make(0, 512);
     b2, b2err := strings.builder_make(0, 512);
@@ -37,9 +41,6 @@ main :: proc() {
 
     fmt.printfln(" > Part 1 = %v", strings.to_string(b1));
     fmt.printfln(" > Part 2 = %v", strings.to_string(b2));
-
-    // Reset arena
-    arena.offset = 0;
 }
 
 which_day :: proc() -> (int, bool) {
