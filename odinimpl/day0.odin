@@ -11,10 +11,12 @@ d0run :: proc (p1, p2: ^strings.Builder) {
     // Cleanup
 }
 
+@(private="file")
 part1 :: proc (out: ^strings.Builder) {
     strings.write_f64(out, 0.5, 'f');
 }
 
+@(private="file")
 part2 :: proc (out: ^strings.Builder) {
     strings.write_f64(out, 0.25, 'f');
 }
