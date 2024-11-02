@@ -17,3 +17,5 @@ Cargo.lock
 #----------------------------------------
 /data
 odinimpl/*exe
+
+odinimpl/aoc19.exe

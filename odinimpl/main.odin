@@ -37,6 +37,9 @@ main :: proc() {
 
     fmt.printfln(" > Part 1 = %v", strings.to_string(b1));
     fmt.printfln(" > Part 2 = %v", strings.to_string(b2));
+
+    // Reset arena
+    arena.offset = 0;
 }
 
 which_day :: proc() -> (int, bool) {
