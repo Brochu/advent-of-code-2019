@@ -3,8 +3,8 @@ import "core:fmt"
 import "core:strings"
 
 d0run :: proc (p1, p2: ^strings.Builder) {
-    when 1 == 1 { input :: #load("../data/day0.example") }
-    else { input :: #load("../data/day0.input") }
+    //when 1 == 1 { input :: #load("../data/day0.example") }
+    //else { input :: #load("../data/day0.input") }
     // Parse input
 
     part1(p1);
