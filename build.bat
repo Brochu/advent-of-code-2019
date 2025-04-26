@@ -1,2 +1,1 @@
-@echo off
-rustc -o AoC2019.exe main.rs
+rustc --cfg day%1 -o AoC2019.exe src/main.rs
