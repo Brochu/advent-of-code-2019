@@ -1,11 +1,8 @@
 use std::cmp::max;
 
-pub fn solve(example: bool) {
-    let input = if example {
-        include_str!("../../data/day1.example")
-    } else {
-        include_str!("../../data/day1.input")
-    };
+pub fn solve() {
+    #[cfg(ex)] let input = include_str!("../../data/day1.example");
+    #[cfg(not(ex))] let input = include_str!("../../data/day1.input");
 
     let nums: Vec<_> = input.lines()
         .map(|s| s.parse::<i32>().unwrap() )

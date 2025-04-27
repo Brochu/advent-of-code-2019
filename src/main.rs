@@ -1,4 +1,4 @@
-//mod intcode;
+mod intcode;
 mod days;
 
 use std::env;
@@ -11,12 +11,11 @@ fn main() {
         process::exit(1);
     }
     let day: i32 = args.get(1).map_or(0, |s| s.parse().unwrap_or_default());
-    let ex = args.get(2).is_some();
 
     println!("[AoC2019] Solving puzzle for day {}", day);
     match day {
-        1 => days::day01::solve(ex),
-        2 => days::day02::solve(ex),
+        1 => days::day01::solve(),
+        2 => days::day02::solve(),
         _ => {
             println!("[AoC2019] invalid day_num: {}", args.get(1).unwrap())
         },
