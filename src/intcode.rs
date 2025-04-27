@@ -1,13 +1,45 @@
+use std::collections::VecDeque;
 use std::fmt::Display;
 
 pub struct Program {
     mem: Vec<i64>,
+    pc: usize,
+    stdin: VecDeque<i64>,
+    stdout: VecDeque<i64>,
 }
 impl Display for Program {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "PROG MEM: {:?}", self.mem)
+        writeln!(f, "    PROG [{}]", self.pc).unwrap();
+        writeln!(f, "    MEM: {:?}", self.mem).unwrap();
+        writeln!(f, "    stdin: {:?}", self.stdin).unwrap();
+        writeln!(f, "    stdout: {:?}", self.stdout).unwrap();
+        write!(f, "    -------------------------")
     }
 }
+
+#[derive(Debug)]
+enum Mode {
+    Pos,
+    Imm,
+}
+
+struct Op {
+    code: i64,
+    args: [i64; 2],
+    target: i64,
+    modes: [Mode; 3],
+}
+impl Display for Op {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "    [{}] - ([{:?}]{}, [{:?}]{}) ; [{:?}]{}",
+            self.code,
+            self.modes[0], self.args[0],
+            self.modes[1], self.args[1],
+            self.modes[2], self.target)
+    }
+}
+
+const PROG_END: i64 = 99;
 
 pub fn read_mem(prog: &Program, addr: usize) -> i64 {
     return prog.mem[addr];
@@ -16,15 +48,27 @@ pub fn write_mem(prog: &mut Program, addr: usize, new_val: i64) {
     return prog.mem[addr] = new_val;
 }
 
+pub fn _send_input(prog: &mut Program, value: i64) {
+    prog.stdin.push_front(value);
+}
+fn _send_output(prog: &mut Program, value: i64) {
+    prog.stdout.push_front(value);
+}
+
 pub fn create_program(code: &str) -> Program {
     let mem: Vec<_> = code.split(",")
         .map(|s| s.trim().parse::<i64>().unwrap())
         .collect();
-    return Program { mem };
+    return Program { mem, pc: 0, stdin: VecDeque::new(), stdout: VecDeque::new() };
 }
 
 pub fn run_program(prog: &mut Program) {
-    //TODO: Rework this because we need to forward the program counter based off of opcode
+    while prog.pc < prog.mem.len() && prog.mem[prog.pc] != PROG_END {
+        let op = parse_op(prog);
+        println!("{}", op);
+        prog.pc += 1;
+    }
+    /*
     for i in (0..prog.mem.len()).step_by(4) {
         let op = prog.mem[i + 0];
         if op == 99 { break; }
@@ -45,4 +89,42 @@ pub fn run_program(prog: &mut Program) {
 
         prog.mem[tar_addr as usize] = result;
     }
+    */
+}
+
+fn parse_op(prog: &mut Program) -> Op {
+    let mut opcode = prog.mem[prog.pc];
+    prog.pc += 1;
+
+    let mut code = opcode % 10;
+    opcode /= 10;
+    code += (opcode % 10) * 10;
+
+    let mut modes = [Mode::Pos, Mode::Pos, Mode::Pos];
+    for i in 0..modes.len() {
+        opcode /= 10;
+        modes[i] = match opcode % 2 {
+            0 => Mode::Pos,
+            1 => Mode::Imm,
+            _ => Mode::Pos,
+        };
+    }
+
+    let mut args = [0, 0];
+    match code {
+        1 | 2 => {
+            args[0] = prog.mem[prog.pc];
+            prog.pc += 1;
+            args[1] = prog.mem[prog.pc];
+            prog.pc += 1;
+        },
+        3 | 4 => {
+        },
+        _ => unimplemented!(),
+    };
+
+    let target = prog.mem[prog.pc];
+    prog.pc += 1;
+
+    return Op { code, args, target, modes };
 }
