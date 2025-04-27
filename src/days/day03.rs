@@ -23,18 +23,27 @@ pub fn solve() {
         .map(|s| parse_steps(s))
         .collect();
 
-    println!("    1st wire: {:?}", first_wire);
-    println!("    2nd wire: {:?}", second_wire);
+    //println!("    1st wire: {:?}", first_wire);
+    //println!("    2nd wire: {:?}", second_wire);
 
 
     let fv = visit_wire(&first_wire);
     let sv = visit_wire(&second_wire);
-    let uni = fv.intersection(&sv);
-    let res = uni.fold(i32::MAX, |acc, (x, y)| {
+    let inter: Vec<_> = fv.intersection(&sv).collect();
+    let p1 = inter.iter().fold(i32::MAX, |acc, (x, y)| {
         min(x.abs() + y.abs(), acc)
     });
 
-    println!("    MIN: {}", res);
+    let mut p2 = i32::MAX;
+    for coord in inter {
+        let len_f = reach_coord(&first_wire, coord);
+        let len_s = reach_coord(&second_wire, coord);
+
+        p2 = min(p2, len_f + len_s);
+    }
+
+    println!("    Part 1 = {}", p1);
+    println!("    Part 2 = {}", p2);
 }
 
 fn parse_steps(desc: &str) -> Step {
@@ -81,4 +90,55 @@ fn visit_wire(wire: &Vec<Step>) -> HashSet<(i32, i32)> {
     }
 
     return first_visit;
+}
+
+fn reach_coord(wire: &Vec<Step>, target: &(i32, i32)) -> i32 {
+    let mut pos = (0, 0);
+    let mut dist = 0;
+
+    for step in wire {
+        match &step {
+            Step::Up(val) => {
+                let diff = (target.1 - pos.1).abs();
+                if pos.0 == target.0 && target.1 < pos.1 && diff <= *val {
+                    dist += diff;
+                    return dist;
+                } else {
+                    pos.1 -= val;
+                    dist += val;
+                }
+            },
+            Step::Left(val) => {
+                let diff = (target.0 - pos.0).abs();
+                if pos.1 == target.1 && target.0 < pos.0 && diff <= *val {
+                    dist += diff;
+                    return dist;
+                } else {
+                    pos.0 -= val;
+                    dist += val;
+                }
+            },
+            Step::Right(val) => {
+                let diff = (target.0 - pos.0).abs();
+                if pos.1 == target.1 && target.0 > pos.0 && diff <= *val {
+                    dist += diff;
+                    return dist;
+                } else {
+                    pos.0 += val;
+                    dist += val;
+                }
+            },
+            Step::Down(val) => {
+                let diff = (target.1 - pos.1).abs();
+                if pos.0 == target.0 && target.1 > pos.1 && diff <= *val {
+                    dist += diff;
+                    return dist;
+                } else {
+                    pos.1 += val;
+                    dist += val;
+                }
+            },
+        }
+    }
+    return dist;
 }
