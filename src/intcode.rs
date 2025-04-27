@@ -24,6 +24,7 @@ pub fn create_program(code: &str) -> Program {
 }
 
 pub fn run_program(prog: &mut Program) {
+    //TODO: Rework this because we need to forward the program counter based off of opcode
     for i in (0..prog.mem.len()).step_by(4) {
         let op = prog.mem[i + 0];
         if op == 99 { break; }
