@@ -1,6 +1,5 @@
 use std::collections::VecDeque;
 use std::fmt::Display;
-use std::usize;
 
 pub struct Program {
     mem: Vec<i64>,
