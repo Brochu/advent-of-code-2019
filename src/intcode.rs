@@ -48,11 +48,15 @@ pub fn write_mem(prog: &mut Program, addr: usize, new_val: i64) {
     return prog.mem[addr] = new_val;
 }
 
-pub fn _send_input(prog: &mut Program, value: i64) {
+pub fn send_input(prog: &mut Program, value: i64) {
     prog.stdin.push_front(value);
 }
-fn _send_output(prog: &mut Program, value: i64) {
-    prog.stdout.push_front(value);
+pub fn print_output(prog: &mut Program) {
+    println!("    PROGRAM OUTPUT:");
+    while let Some(val) = prog.stdout.pop_back() {
+        println!("    - `{}`", val);
+    }
+    println!("    -------------------------");
 }
 
 pub fn create_program(code: &str) -> Program {
@@ -65,8 +69,25 @@ pub fn create_program(code: &str) -> Program {
 pub fn run_program(prog: &mut Program) {
     while prog.pc < prog.mem.len() && prog.mem[prog.pc] != PROG_END {
         let op = parse_op(prog);
-        println!("{}", op);
-        prog.pc += 1;
+
+        match op.code {
+            1 => {
+                let sum = resolve_arg(prog, &op.modes[0], op.args[0]) + resolve_arg(prog, &op.modes[1], op.args[1]);
+                prog.mem[op.target as usize] = sum;
+            },
+            2 => {
+                let prod = resolve_arg(prog, &op.modes[0], op.args[0]) * resolve_arg(prog, &op.modes[1], op.args[1]);
+                prog.mem[op.target as usize] = prod;
+            },
+            3 => {
+                prog.mem[op.target as usize] = prog.stdin.pop_back().unwrap();
+            },
+            4 => {
+                let val = prog.mem[op.target as usize];
+                prog.stdout.push_front(val);
+            },
+            _ => unimplemented!(),
+        }
     }
     /*
     for i in (0..prog.mem.len()).step_by(4) {
@@ -129,6 +150,9 @@ fn parse_op(prog: &mut Program) -> Op {
     return Op { code, args, target, modes };
 }
 
-fn resolve_arg(mode: Mode, value: i64) -> i64 {
-    return 0;
+fn resolve_arg(prog: &mut Program, mode: &Mode, value: i64) -> i64 {
+    match mode {
+        Mode::Pos => prog.mem[value as usize],
+        Mode::Imm => value,
+    }
 }
