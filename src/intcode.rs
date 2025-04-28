@@ -128,3 +128,7 @@ fn parse_op(prog: &mut Program) -> Op {
 
     return Op { code, args, target, modes };
 }
+
+fn resolve_arg(mode: Mode, value: i64) -> i64 {
+    return 0;
+}
