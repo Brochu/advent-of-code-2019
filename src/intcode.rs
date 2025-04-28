@@ -1,5 +1,6 @@
 use std::collections::VecDeque;
 use std::fmt::Display;
+use std::usize;
 
 pub struct Program {
     mem: Vec<i64>,
@@ -72,45 +73,57 @@ pub fn run_program(prog: &mut Program) {
 
         match op.code {
             1 => {
-                let sum = resolve_arg(prog, &op.modes[0], op.args[0]) + resolve_arg(prog, &op.modes[1], op.args[1]);
+                // ADD
+                let sum = resolve_arg(prog, &op, 0) + resolve_arg(prog, &op, 1);
                 prog.mem[op.target as usize] = sum;
             },
             2 => {
-                let prod = resolve_arg(prog, &op.modes[0], op.args[0]) * resolve_arg(prog, &op.modes[1], op.args[1]);
+                // MULT
+                let prod = resolve_arg(prog, &op, 0) * resolve_arg(prog, &op, 1);
                 prog.mem[op.target as usize] = prod;
             },
             3 => {
+                //INPUT
                 prog.mem[op.target as usize] = prog.stdin.pop_back().unwrap();
             },
             4 => {
-                let val = prog.mem[op.target as usize];
+                //OUTPUT
+                let val = resolve_arg(prog, &op, 0);
                 prog.stdout.push_front(val);
+            },
+            5 => {
+                // JUMP_IF_TRUE
+                if resolve_arg(prog, &op, 0) != 0 {
+                    prog.pc = resolve_arg(prog, &op, 1) as usize;
+                }
+            }
+            6 => {
+                // JUMP_IF_FALSE
+                if resolve_arg(prog, &op, 0) == 0 {
+                    prog.pc = resolve_arg(prog, &op, 1) as usize;
+                }
+            }
+            7 => {
+                // LESS_THAN
+                let res = if resolve_arg(prog, &op, 0) < resolve_arg(prog, &op, 1) {
+                    1
+                } else {
+                    0
+                };
+                prog.mem[op.target as usize] = res;
+            },
+            8 => {
+                // EQUALS
+                let res = if resolve_arg(prog, &op, 0) == resolve_arg(prog, &op, 1) {
+                    1
+                } else {
+                    0
+                };
+                prog.mem[op.target as usize] = res;
             },
             _ => unimplemented!(),
         }
     }
-    /*
-    for i in (0..prog.mem.len()).step_by(4) {
-        let op = prog.mem[i + 0];
-        if op == 99 { break; }
-
-        let arg0_addr = prog.mem[i + 1];
-        let arg1_addr = prog.mem[i + 2];
-        let tar_addr = prog.mem[i + 3];
-
-        let arg0 = prog.mem[arg0_addr as usize];
-        let arg1 = prog.mem[arg1_addr as usize];
-
-        //println!("{}: ({}, {}) , {}", op, arg0, arg1, tar_addr);
-        let result = match op {
-            1 => { arg0 + arg1 }
-            2 => { arg0 * arg1 }
-            _ => { unimplemented!( )}
-        };
-
-        prog.mem[tar_addr as usize] = result;
-    }
-    */
 }
 
 fn parse_op(prog: &mut Program) -> Op {
@@ -132,27 +145,40 @@ fn parse_op(prog: &mut Program) -> Op {
     }
 
     let mut args = [0, 0];
+    let mut target = 0;
     match code {
-        1 | 2 => {
+        1 | 2 | 7 | 8 => {
             args[0] = prog.mem[prog.pc];
             prog.pc += 1;
             args[1] = prog.mem[prog.pc];
             prog.pc += 1;
+            target = prog.mem[prog.pc];
+            prog.pc += 1;
         },
-        3 | 4 => {
+        3 => {
+            target = prog.mem[prog.pc];
+            prog.pc += 1;
         },
+        4 => {
+            args[0] = prog.mem[prog.pc];
+            prog.pc += 1;
+        },
+        5 | 6 => {
+            args[0] = prog.mem[prog.pc];
+            prog.pc += 1;
+            args[1] = prog.mem[prog.pc];
+            prog.pc += 1;
+        }
         _ => unimplemented!(),
     };
 
-    let target = prog.mem[prog.pc];
-    prog.pc += 1;
 
     return Op { code, args, target, modes };
 }
 
-fn resolve_arg(prog: &mut Program, mode: &Mode, value: i64) -> i64 {
-    match mode {
-        Mode::Pos => prog.mem[value as usize],
-        Mode::Imm => value,
+fn resolve_arg(prog: &mut Program, op: &Op, index: usize) -> i64 {
+    match op.modes[index] {
+        Mode::Pos => prog.mem[op.args[index] as usize],
+        Mode::Imm => op.args[index],
     }
 }
