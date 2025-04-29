@@ -1,3 +1,4 @@
+use std::cmp::max;
 use crate::intcode;
 
 pub fn solve() {
@@ -7,19 +8,35 @@ pub fn solve() {
     let memory: Vec<_> = input.split(",")
         .map(|s| s.trim().parse::<i64>().unwrap())
         .collect();
-    println!("{:?}", memory);
-    let mut a_prog = intcode::fork_program(&memory);
-    let b_prog = intcode::fork_program(&memory);
 
-    println!("{}", a_prog);
-    println!("{}", b_prog);
+    fn permutations<T: Clone>(items: &mut Vec<T>, start: usize, result: &mut Vec<Vec<T>>) {
+        if start == items.len() {
+            result.push(items.clone());
+        } else {
+            for i in start..items.len() {
+                items.swap(start, i);
+                permutations(items, start + 1, result);
+                items.swap(start, i); // backtrack
+            }
+        }
+    }
+    let mut phases = vec![4, 3, 2, 1, 0];
+    let mut all_checks: Vec<Vec<i64>> = vec![];
+    permutations(&mut phases, 0, &mut all_checks);
 
-    intcode::send_input(&mut a_prog, 0);
-    intcode::send_input(&mut a_prog, 1);
-    intcode::run_program(&mut a_prog);
-    let res = intcode::pop_output(&mut a_prog);
-    println!("result = {}", res);
+    let mut max_signal = 0;
+    for phase in all_checks {
+        let mut signal = 0;
+        for i in 0..phases.len() {
+            let mut prog = intcode::fork_program(&memory);
+            intcode::send_input(&mut prog, phase[i]);
+            intcode::send_input(&mut prog, signal);
 
-    println!("{}", a_prog);
-    println!("{}", b_prog);
+            intcode::run_program(&mut prog);
+            signal = intcode::pop_output(&mut prog);
+        }
+        max_signal = max(max_signal, signal);
+    }
+
+    println!("    final signal = {}", max_signal);
 }
