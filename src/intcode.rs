@@ -58,12 +58,19 @@ pub fn print_output(prog: &mut Program) {
     }
     println!("    -------------------------");
 }
+pub fn pop_output(prog: &mut Program) -> i64 {
+    return prog.stdout.pop_back().unwrap();
+}
 
 pub fn create_program(code: &str) -> Program {
     let mem: Vec<_> = code.split(",")
         .map(|s| s.trim().parse::<i64>().unwrap())
         .collect();
     return Program { mem, pc: 0, stdin: VecDeque::new(), stdout: VecDeque::new() };
+}
+pub fn fork_program(memory: &Vec<i64>) -> Program {
+    let mem = memory.clone();
+    return Program { mem, pc: 0, stdin: VecDeque::new(), stdout: VecDeque::new() }
 }
 
 pub fn run_program(prog: &mut Program) {

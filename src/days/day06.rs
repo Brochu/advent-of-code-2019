@@ -67,12 +67,12 @@ pub fn solve() {
     find(&tree, &mut sanp, "SAN", Some("COM"));
     //println!("    SAN PATH: {:?}", sanp);
 
-    let mut p1 = 0;
+    let mut p2 = 0;
     for i in 0..min(youp.len(), sanp.len()) {
         if youp[i] != sanp[i] {
-            p1 = youp.len() - i - 1 + sanp.len() - i - 1;
+            p2 = youp.len() - i - 1 + sanp.len() - i - 1;
             break;
         }
     }
-    println!("    Part 1 = {}", p1);
+    println!("    Part 2 = {}", p2);
 }
