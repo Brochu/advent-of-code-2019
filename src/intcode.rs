@@ -76,6 +76,7 @@ pub fn fork_program(memory: &Vec<i64>) -> Program {
 pub fn run_program(prog: &mut Program) {
     while prog.pc < prog.mem.len() && prog.mem[prog.pc] != PROG_END {
         let op = parse_op(prog);
+        println!("    {}", op);
 
         match op.code {
             1 => {

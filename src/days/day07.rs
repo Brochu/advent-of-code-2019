@@ -2,7 +2,8 @@ use std::cmp::max;
 use crate::intcode;
 
 pub fn solve() {
-    #[cfg(ex)] let input = include_str!("../../data/day7.example");
+    //#[cfg(ex)] let input = include_str!("../../data/day7.example");
+    #[cfg(ex)] let input = include_str!("../../data/day7.2.example");
     #[cfg(not(ex))] let input = include_str!("../../data/day7.input");
 
     let memory: Vec<_> = input.split(",")
@@ -20,12 +21,13 @@ pub fn solve() {
             }
         }
     }
+    /*
     let mut phases = vec![4, 3, 2, 1, 0];
     let mut all_checks: Vec<Vec<i64>> = vec![];
     permutations(&mut phases, 0, &mut all_checks);
 
-    let mut max_signal = 0;
-    for phase in all_checks {
+    let mut p1_max = 0;
+    for phase in all_checks.iter() {
         let mut signal = 0;
         for i in 0..phases.len() {
             let mut prog = intcode::fork_program(&memory);
@@ -35,8 +37,29 @@ pub fn solve() {
             intcode::run_program(&mut prog);
             signal = intcode::pop_output(&mut prog);
         }
-        max_signal = max(max_signal, signal);
+        p1_max = max(p1_max, signal);
     }
 
-    println!("    final signal = {}", max_signal);
+    println!("    Part 1 = {}", p1_max);
+    */
+
+    let mut phases = vec![5, 6, 7, 8, 9];
+    let mut all_checks: Vec<Vec<i64>> = vec![];
+    permutations(&mut phases, 0, &mut all_checks);
+
+    let mut ap = intcode::fork_program(&memory);
+    intcode::send_input(&mut ap, 5);
+    intcode::send_input(&mut ap, 0);
+    println!("    {}", ap);
+
+    intcode::run_program(&mut ap);
+    //TODO: Need to find a way to connect stdin/stdout directly? seamless exec?
+
+    let mut p2_max = 0;
+    for _phase in all_checks.iter() {
+        let signal = 0;
+        p2_max = max(p2_max, signal);
+    }
+
+    println!("    Part 2 = {}", p2_max);
 }
