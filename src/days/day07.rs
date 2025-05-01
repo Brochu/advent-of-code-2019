@@ -67,9 +67,8 @@ pub fn solve() {
     }
     */
 
-    //let mut p2_max = 0;
-    //for phase in all_checks.iter() {
-    let phase = &all_checks[0];
+    let mut p2_max = 0;
+    for phase in all_checks.iter() {
         let mut programs = Vec::<intcode::Program>::new();
         for &val in phase {
             let mut p = intcode::fork_program(&memory);
@@ -88,8 +87,8 @@ pub fn solve() {
                 }
             }
         }
-        println!("    End Signal = {}", signal);
-    //}
+        p2_max = max(p2_max, signal);
+    }
 
-    //println!("    Part 2 = {}", p2_max);
+    println!("    Part 2 = {}", p2_max);
 }
