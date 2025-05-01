@@ -23,6 +23,11 @@ enum Mode {
     Imm,
 }
 
+pub enum Status {
+    Halted,
+    Output,
+}
+
 struct Op {
     code: i64,
     args: [i64; 2],
@@ -38,8 +43,6 @@ impl Display for Op {
             self.modes[2], self.target)
     }
 }
-
-const PROG_END: i64 = 99;
 
 pub fn read_mem(prog: &Program, addr: usize) -> i64 {
     return prog.mem[addr];
@@ -73,8 +76,8 @@ pub fn fork_program(memory: &Vec<i64>) -> Program {
     return Program { mem, pc: 0, stdin: VecDeque::new(), stdout: VecDeque::new() }
 }
 
-pub fn run_program(prog: &mut Program) {
-    while prog.pc < prog.mem.len() && prog.mem[prog.pc] != PROG_END {
+pub fn run_program(prog: &mut Program) -> Status {
+    loop {
         let op = parse_op(prog);
         println!("    {}", op);
 
@@ -97,6 +100,7 @@ pub fn run_program(prog: &mut Program) {
                 //OUTPUT
                 let val = resolve_arg(prog, &op, 0);
                 prog.stdout.push_front(val);
+                return Status::Output;
             },
             5 => {
                 // JUMP_IF_TRUE
@@ -128,6 +132,9 @@ pub fn run_program(prog: &mut Program) {
                 };
                 prog.mem[op.target as usize] = res;
             },
+            99 => {
+                return Status::Halted;
+            }
             _ => unimplemented!(),
         }
     }
@@ -175,6 +182,8 @@ fn parse_op(prog: &mut Program) -> Op {
             prog.pc += 1;
             args[1] = prog.mem[prog.pc];
             prog.pc += 1;
+        }
+        99 => {
         }
         _ => unimplemented!(),
     };

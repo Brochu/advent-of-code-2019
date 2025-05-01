@@ -49,11 +49,21 @@ pub fn solve() {
 
     let mut ap = intcode::fork_program(&memory);
     intcode::send_input(&mut ap, 5);
-    intcode::send_input(&mut ap, 0);
-    println!("    {}", ap);
 
-    intcode::run_program(&mut ap);
-    //TODO: Need to find a way to connect stdin/stdout directly? seamless exec?
+    let mut signal = 0;
+    loop {
+        intcode::send_input(&mut ap, signal);
+        match intcode::run_program(&mut ap) {
+            intcode::Status::Halted => {
+                println!("    HALTED");
+                break;
+            },
+            intcode::Status::Output => {
+                signal = intcode::pop_output(&mut ap);
+                println!("    New Output: {}", signal);
+            },
+        }
+    }
 
     let mut p2_max = 0;
     for _phase in all_checks.iter() {
