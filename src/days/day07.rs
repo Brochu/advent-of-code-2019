@@ -43,10 +43,11 @@ pub fn solve() {
     println!("    Part 1 = {}", p1_max);
     */
 
-    let mut phases = vec![5, 6, 7, 8, 9];
+    let mut phases = vec![9, 8, 7, 6, 5];
     let mut all_checks: Vec<Vec<i64>> = vec![];
     permutations(&mut phases, 0, &mut all_checks);
 
+    /*
     let mut ap = intcode::fork_program(&memory);
     intcode::send_input(&mut ap, 5);
 
@@ -64,12 +65,31 @@ pub fn solve() {
             },
         }
     }
+    */
 
-    let mut p2_max = 0;
-    for _phase in all_checks.iter() {
-        let signal = 0;
-        p2_max = max(p2_max, signal);
-    }
+    //let mut p2_max = 0;
+    //for phase in all_checks.iter() {
+    let phase = &all_checks[0];
+        let mut programs = Vec::<intcode::Program>::new();
+        for &val in phase {
+            let mut p = intcode::fork_program(&memory);
+            intcode::send_input(&mut p, val);
+            programs.push(p);
+        }
 
-    println!("    Part 2 = {}", p2_max);
+        let mut signal = 0;
+        'main: loop {
+            for p in &mut programs {
+                intcode::send_input(p, signal);
+                if let intcode::Status::Output = intcode::run_program(p) {
+                    signal = intcode::pop_output(p);
+                } else {
+                    break 'main;
+                }
+            }
+        }
+        println!("    End Signal = {}", signal);
+    //}
+
+    //println!("    Part 2 = {}", p2_max);
 }

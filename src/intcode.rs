@@ -79,7 +79,7 @@ pub fn fork_program(memory: &Vec<i64>) -> Program {
 pub fn run_program(prog: &mut Program) -> Status {
     loop {
         let op = parse_op(prog);
-        println!("    {}", op);
+        //println!("    {}", op);
 
         match op.code {
             1 => {
