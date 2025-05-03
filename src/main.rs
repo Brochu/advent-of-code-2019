@@ -22,6 +22,7 @@ fn main() {
         6 => days::day06::solve(),
         7 => days::day07::solve(),
         8 => days::day08::solve(),
+        9 => days::day09::solve(),
         _ => {
             println!("[AoC2019] invalid day_num: {}", args.get(1).unwrap())
         },

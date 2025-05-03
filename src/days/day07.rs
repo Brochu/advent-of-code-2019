@@ -30,7 +30,7 @@ pub fn solve() {
     for phase in all_checks.iter() {
         let mut signal = 0;
         for i in 0..phases.len() {
-            let mut prog = intcode::fork_program(&memory);
+            let mut prog = intcode::fork_program(&memory, 100);
             intcode::send_input(&mut prog, phase[i]);
             intcode::send_input(&mut prog, signal);
 
@@ -48,7 +48,7 @@ pub fn solve() {
     permutations(&mut phases, 0, &mut all_checks);
 
     /*
-    let mut ap = intcode::fork_program(&memory);
+    let mut ap = intcode::fork_program(&memory, 100);
     intcode::send_input(&mut ap, 5);
 
     let mut signal = 0;
@@ -71,7 +71,7 @@ pub fn solve() {
     for phase in all_checks.iter() {
         let mut programs = Vec::<intcode::Program>::new();
         for &val in phase {
-            let mut p = intcode::fork_program(&memory);
+            let mut p = intcode::fork_program(&memory, 100);
             intcode::send_input(&mut p, val);
             programs.push(p);
         }

@@ -4,7 +4,7 @@ pub fn solve() {
     #[cfg(ex)] let input = include_str!("../../data/day2.example");
     #[cfg(not(ex))] let input = include_str!("../../data/day2.input");
 
-    let mut prog = intcode::create_program(input);
+    let mut prog = intcode::create_program(input, 100);
     intcode::write_mem(&mut prog, 1, 12);
     intcode::write_mem(&mut prog, 2, 2);
 
@@ -15,7 +15,7 @@ pub fn solve() {
     let mut p2 = 0;
     for noun in 0..=99 {
         for verb in 0..=99 {
-            let mut check_prg = intcode::create_program(input);
+            let mut check_prg = intcode::create_program(input, 100);
             intcode::write_mem(&mut check_prg, 1, noun);
             intcode::write_mem(&mut check_prg, 2, verb);
 

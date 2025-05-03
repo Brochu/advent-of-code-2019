@@ -4,6 +4,7 @@ use std::fmt::Display;
 pub struct Program {
     mem: Vec<i64>,
     pc: usize,
+    offset: i64,
     stdin: VecDeque<i64>,
     stdout: VecDeque<i64>,
 }
@@ -21,6 +22,7 @@ impl Display for Program {
 enum Mode {
     Pos,
     Imm,
+    Rel,
 }
 
 pub enum Status {
@@ -65,21 +67,24 @@ pub fn pop_output(prog: &mut Program) -> i64 {
     return prog.stdout.pop_back().unwrap();
 }
 
-pub fn create_program(code: &str) -> Program {
-    let mem: Vec<_> = code.split(",")
+pub fn create_program(code: &str, mem_size: usize) -> Program {
+    let mut mem: Vec<_> = code.split(",")
         .map(|s| s.trim().parse::<i64>().unwrap())
         .collect();
-    return Program { mem, pc: 0, stdin: VecDeque::new(), stdout: VecDeque::new() };
+    mem.resize(mem_size, 0);
+
+    return Program { mem, pc: 0, offset: 0, stdin: VecDeque::new(), stdout: VecDeque::new() };
 }
-pub fn fork_program(memory: &Vec<i64>) -> Program {
-    let mem = memory.clone();
-    return Program { mem, pc: 0, stdin: VecDeque::new(), stdout: VecDeque::new() }
+pub fn fork_program(memory: &Vec<i64>, mem_size: usize) -> Program {
+    let mut mem = memory.clone();
+    mem.resize(mem_size, 0);
+    return Program { mem, pc: 0, offset: 0, stdin: VecDeque::new(), stdout: VecDeque::new() }
 }
 
 pub fn run_program(prog: &mut Program) -> Status {
     loop {
         let op = parse_op(prog);
-        //println!("    {}", op);
+        println!("    {}", op);
 
         match op.code {
             1 => {
@@ -132,6 +137,10 @@ pub fn run_program(prog: &mut Program) -> Status {
                 };
                 prog.mem[op.target as usize] = res;
             },
+            9 => {
+                // UPDATE OFFSET
+                prog.offset += resolve_arg(prog, &op, 0);
+            }
             99 => {
                 return Status::Halted;
             }
@@ -151,9 +160,10 @@ fn parse_op(prog: &mut Program) -> Op {
     let mut modes = [Mode::Pos, Mode::Pos, Mode::Pos];
     for i in 0..modes.len() {
         opcode /= 10;
-        modes[i] = match opcode % 2 {
+        modes[i] = match opcode % 3 {
             0 => Mode::Pos,
             1 => Mode::Imm,
+            2 => Mode::Rel,
             _ => Mode::Pos,
         };
     }
@@ -173,7 +183,7 @@ fn parse_op(prog: &mut Program) -> Op {
             target = prog.mem[prog.pc];
             prog.pc += 1;
         },
-        4 => {
+        4 | 9 => {
             args[0] = prog.mem[prog.pc];
             prog.pc += 1;
         },
@@ -196,5 +206,6 @@ fn resolve_arg(prog: &mut Program, op: &Op, index: usize) -> i64 {
     match op.modes[index] {
         Mode::Pos => prog.mem[op.args[index] as usize],
         Mode::Imm => op.args[index],
+        Mode::Rel => op.args[(prog.offset + index as i64) as usize],
     }
 }
