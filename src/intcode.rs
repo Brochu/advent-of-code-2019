@@ -10,7 +10,7 @@ pub struct Program {
 }
 impl Display for Program {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "    PROG [{}]", self.pc).unwrap();
+        writeln!(f, "    PROG [{}][{}]", self.pc, self.offset).unwrap();
         writeln!(f, "    MEM: {:?}", self.mem).unwrap();
         writeln!(f, "    stdin: {:?}", self.stdin).unwrap();
         writeln!(f, "    stdout: {:?}", self.stdout).unwrap();
@@ -77,29 +77,38 @@ pub fn create_program(code: &str, mem_size: usize) -> Program {
 }
 pub fn fork_program(memory: &Vec<i64>, mem_size: usize) -> Program {
     let mut mem = memory.clone();
-    mem.resize(mem_size, 0);
+    if mem_size != 0 {
+        mem.resize(mem_size, 0);
+    }
     return Program { mem, pc: 0, offset: 0, stdin: VecDeque::new(), stdout: VecDeque::new() }
 }
 
 pub fn run_program(prog: &mut Program) -> Status {
     loop {
         let op = parse_op(prog);
-        println!("    {}", op);
+        //println!("{}", op);
 
         match op.code {
             1 => {
                 // ADD
                 let sum = resolve_arg(prog, &op, 0) + resolve_arg(prog, &op, 1);
-                prog.mem[op.target as usize] = sum;
+                let addr = resolve_target(prog, &op);
+                prog.mem[addr] = sum;
             },
             2 => {
                 // MULT
                 let prod = resolve_arg(prog, &op, 0) * resolve_arg(prog, &op, 1);
-                prog.mem[op.target as usize] = prod;
+                let addr = resolve_target(prog, &op);
+                prog.mem[addr] = prod;
             },
             3 => {
                 //INPUT
-                prog.mem[op.target as usize] = prog.stdin.pop_back().unwrap();
+                let addr = match op.modes[0] {
+                    Mode::Pos => op.args[0],
+                    Mode::Rel => prog.offset + op.args[0],
+                    Mode::Imm => panic!("    Cannot input at immediate arg"),
+                };
+                prog.mem[addr as usize] = prog.stdin.pop_back().unwrap();
             },
             4 => {
                 //OUTPUT
@@ -126,7 +135,8 @@ pub fn run_program(prog: &mut Program) -> Status {
                 } else {
                     0
                 };
-                prog.mem[op.target as usize] = res;
+                let addr = resolve_target(prog, &op);
+                prog.mem[addr] = res;
             },
             8 => {
                 // EQUALS
@@ -135,12 +145,14 @@ pub fn run_program(prog: &mut Program) -> Status {
                 } else {
                     0
                 };
-                prog.mem[op.target as usize] = res;
+                let addr = resolve_target(prog, &op);
+                prog.mem[addr] = res;
             },
             9 => {
-                // UPDATE OFFSET
-                prog.offset += resolve_arg(prog, &op, 0);
-            }
+                let arg = resolve_arg(prog, &op, 0);
+                let new_val = prog.offset + arg;
+                prog.offset = new_val;
+            },
             99 => {
                 return Status::Halted;
             }
@@ -152,6 +164,7 @@ pub fn run_program(prog: &mut Program) -> Status {
 fn parse_op(prog: &mut Program) -> Op {
     let mut opcode = prog.mem[prog.pc];
     prog.pc += 1;
+    //println!("    [PARSE] op = {}", opcode);
 
     let mut code = opcode % 10;
     opcode /= 10;
@@ -160,7 +173,7 @@ fn parse_op(prog: &mut Program) -> Op {
     let mut modes = [Mode::Pos, Mode::Pos, Mode::Pos];
     for i in 0..modes.len() {
         opcode /= 10;
-        modes[i] = match opcode % 3 {
+        modes[i] = match opcode % 10 {
             0 => Mode::Pos,
             1 => Mode::Imm,
             2 => Mode::Rel,
@@ -179,11 +192,7 @@ fn parse_op(prog: &mut Program) -> Op {
             target = prog.mem[prog.pc];
             prog.pc += 1;
         },
-        3 => {
-            target = prog.mem[prog.pc];
-            prog.pc += 1;
-        },
-        4 | 9 => {
+        3 | 4 | 9=> {
             args[0] = prog.mem[prog.pc];
             prog.pc += 1;
         },
@@ -198,7 +207,7 @@ fn parse_op(prog: &mut Program) -> Op {
         _ => unimplemented!(),
     };
 
-
+    //println!("    [PARSE] args = {:?}; target = {}; modes = {:?}", args, target, modes);
     return Op { code, args, target, modes };
 }
 
@@ -206,6 +215,17 @@ fn resolve_arg(prog: &mut Program, op: &Op, index: usize) -> i64 {
     match op.modes[index] {
         Mode::Pos => prog.mem[op.args[index] as usize],
         Mode::Imm => op.args[index],
-        Mode::Rel => op.args[(prog.offset + index as i64) as usize],
+        Mode::Rel => {
+            let addr = prog.offset + op.args[index];
+            prog.mem[addr as usize]
+        },
     }
+}
+
+fn resolve_target(prog: &mut Program, op: &Op) -> usize {
+    return match op.modes[2] {
+        Mode::Pos => op.target as usize,
+        Mode::Rel => (prog.offset + op.target) as usize,
+        Mode::Imm => panic!("    Cannot input at immediate arg"),
+    };
 }

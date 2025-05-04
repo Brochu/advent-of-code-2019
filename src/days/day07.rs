@@ -71,7 +71,7 @@ pub fn solve() {
     for phase in all_checks.iter() {
         let mut programs = Vec::<intcode::Program>::new();
         for &val in phase {
-            let mut p = intcode::fork_program(&memory, 100);
+            let mut p = intcode::fork_program(&memory, 0);
             intcode::send_input(&mut p, val);
             programs.push(p);
         }
