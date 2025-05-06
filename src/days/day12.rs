@@ -64,11 +64,9 @@ fn step_system(moons: &mut Vec<Moon>) {
         for j in 0..moons.len() {
             if i == j { continue; }
             unsafe {
-                //TODO: Fix this, 2 mutable borrows
                 let arr = moons.as_mut_ptr();
                 let a = &mut *arr.add(i);
                 let b = & *arr.add(j);
-                //println!("    {} vs. {}", a, b);
                 a.vel.x += (b.pos.x - a.pos.x).signum();
                 a.vel.y += (b.pos.y - a.pos.y).signum();
                 a.vel.z += (b.pos.z - a.pos.z).signum();
