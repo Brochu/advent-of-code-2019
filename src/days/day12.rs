@@ -1,5 +1,6 @@
 use std::fmt::Display;
 
+#[derive(Clone, PartialEq)]
 struct Vector {
     x: i32,
     y: i32,
@@ -11,6 +12,7 @@ impl Display for Vector {
     }
 }
 
+#[derive(Clone)]
 struct Moon {
     pos: Vector,
     vel: Vector,
@@ -46,6 +48,8 @@ pub fn solve() {
         })
         //.inspect(|moon| println!("{}", moon))
         .collect();
+    let moons_base = moons.clone();
+    let mut moons_p2 = moons.clone();
 
     const STEPS: i32 = 1000;
     for _ in 0..STEPS {
@@ -57,6 +61,20 @@ pub fn solve() {
             acc + calc_energy(moon)
         });
     println!("    Part 1 = {}", p1);
+
+    //TODO: Do we need to find GCD or LCD? Are they the same?
+    let idx = 3;
+    let mut count = 0;
+    step_system(&mut moons_p2);
+    while moons_base.get(idx).unwrap().pos != moons_p2.get(idx).unwrap().pos {
+        step_system(&mut moons_p2);
+        count += 1;
+    }
+    println!("{} == {} -> {}",
+        moons_base.get(idx).unwrap().pos,
+        moons_p2.get(idx).unwrap().pos,
+        count
+    );
 }
 
 fn step_system(moons: &mut Vec<Moon>) {
